@@ -13,6 +13,11 @@
       skip: true
   tags: always
 
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  when: (ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu')
+  
 - import_tasks: limits.yml
   tags: limits
 

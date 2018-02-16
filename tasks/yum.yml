@@ -19,6 +19,11 @@
     path: '/etc/yum/pluginconf.d/rhnplugin.conf'
   register: rhnplugin_file
 
+- name: check if dnf.conf exists
+  stat:
+    path: '/etc/dnf/dnf.conf'
+  register: dnf_file
+
   # for the 'default([])' see here:
   # https://github.com/dev-sec/ansible-os-hardening/issues/99 and
   # https://stackoverflow.com/questions/37067827/ansible-deprecation-warning-for-undefined-variable-despite-when-clause
@@ -28,7 +33,7 @@
     regexp: '^\s*gpgcheck: 0'
     replace: 'gpgcheck: 1'
   with_flattened:
-    - '/etc/yum.conf'
+    - "{{ '/etc/dnf/dnf.conf' if dnf_file.stat.exists else '/etc/yum.conf' }}"
     - '{{ yum_repos.stdout_lines| default([]) }}'
 
 - name: activate gpg-check for yum rhn if it exists
@@ -39,7 +44,7 @@
   when: rhnplugin_file.stat.exists
 
 - name: remove deprecated or insecure packages | package-01 - package-09
-  yum:
+  package:
     name: '{{ item }}'
     state: 'absent'
   with_items:
